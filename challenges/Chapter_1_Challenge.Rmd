@@ -44,7 +44,15 @@ Load the following libraries.
 ```{r}
 # install.packages("plotly")
 
-library(tidyverse)
+#library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(forcats)
+library(tibble)
+library(stringr)
+library(purrr)
+library(readr)
+
 library(tidyquant)
 library(broom)
 library(umap)
