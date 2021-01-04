@@ -56,6 +56,7 @@ library(readr)
 #library(tidyquant)
 library(broom)
 library(umap)
+library(cluster) 
 ```
 
 
@@ -74,6 +75,7 @@ We can read in the stock prices. The data is 1.2M observations. The most importa
 # STOCK PRICES
 sp_500_prices_tbl <- read_rds("/home/abbasi/Desktop/R/BDML/sp_500_prices_tbl.rds")
 sp_500_prices_tbl
+sp_500_prices_tbl <- as_tibble(sp_500_prices_tbl)
 ```
 
 The second data frame contains information about the stocks the most important of which are:
@@ -84,6 +86,8 @@ The second data frame contains information about the stocks the most important o
 ```{r}
 # SECTOR INFORMATION
 sp_500_index_tbl <- read_rds("/home/abbasi/Desktop/R/raw_data/sp_500_index_tbl.rds")
+sp_500_index_tbl
+sp_500_index_tbl <- as_tibble(sp_500_index_tbl)
 sp_500_index_tbl
 ```
 
@@ -112,6 +116,7 @@ First, what do we have? We have stock prices for every stock in the [SP 500 Inde
 
 ```{r}
 sp_500_prices_tbl %>% glimpse()
+
 ```
 
 Your first task is to convert to a tibble named `sp_500_daily_returns_tbl` by performing the following operations:
@@ -128,7 +133,15 @@ Your first task is to convert to a tibble named `sp_500_daily_returns_tbl` by pe
 ```{r}
 # Apply your data transformation skills!
 
-# Output: sp_500_daily_returns_tbl
+sub_sp_500_prices_tbl <- select(sp_500_prices_tbl,  symbol, date, adjusted)
+sub_sp_500_prices_tbl <- filter(sub_sp_500_prices_tbl, date >= "2018-01-01")
+sub_sp_500_prices_tbl %>% glimpse()
+
+# 0utput: sp_500_daily_returns_tbl
+```
+```{r}
+sp_500_dayl <- read_rds("/home/abbasi/Desktop/R/raw_data/sp_500_daily_returns_tbl.rds")
+sp_500_dayl %>% glimpse()
 ```
 
 
@@ -151,7 +164,6 @@ Now that we have the daily returns (percentage change from one day to the next),
 
 ```{r}
 # Convert to User-Item Format
-
 # Output: stock_date_matrix_tbl
 ```
 
@@ -164,6 +176,7 @@ Next, we'll perform __K-Means clustering__.
 We're going to import the correct results first (just in case you were not able to complete the last step).
 ```{r}
 stock_date_matrix_tbl <- read_rds("/home/abbasi/Desktop/R/raw_data/stock_date_matrix_tbl.rds")
+stock_date_matrix_tbl
 ```
 
 Beginning with the `stock_date_matrix_tbl`, perform the following operations:
@@ -174,6 +187,7 @@ Beginning with the `stock_date_matrix_tbl`, perform the following operations:
 
 ```{r}
 # Create kmeans_obj for 4 centers
+
 
 ```
 
@@ -287,6 +301,7 @@ We're going to import the correct results first (just in case you were not able 
 ```{r}
 k_means_mapped_tbl <- read_rds("/home/abbasi/Desktop/R/raw_data/k_means_mapped_tbl.rds")
 umap_results_tbl   <- read_rds("/home/abbasi/Desktop/R/raw_data/umap_results_tbl.rds")
+umap_results_tbl 
 ```
 
 
