@@ -415,34 +415,162 @@ div.tocify {
 </div>
 
 
-<p><strong>IMPORTANT:</strong> You can delete everything in here and start fresh. You might want to start by not deleting anything above this line until you know what that stuff is doing.</p>
-<p>This is an <code>.Rmd</code> file. It is plain text with special features. Any time you write just like this, it will be compiled to normal text in the website. If you put a # in front of your text, it will create a top level-header.</p>
-<div id="my-first-post" class="section level1">
-<h1><span class="header-section-number">1</span> My first post</h1>
-<p>Last compiled: 2021-01-04</p>
-<p>Notice that whatever you define as a top level header, automatically gets put into the table of contents bar on the left.</p>
-<div id="second-level-header" class="section level2">
-<h2><span class="header-section-number">1.1</span> Second level header</h2>
-<p>You can add more headers by adding more hashtags. These won’t be put into the table of contents</p>
-<div id="third-level-header" class="section level3">
-<h3><span class="header-section-number">1.1.1</span> third level header</h3>
-<p>Here’s an even lower level header</p>
+<p>library(tidymodels) library(magrittr) library(dplyr) library(sjmisc) library(magrittr) library(haven) library(sjlabelled)</p>
+<p>employee_attrition_tbl &lt;- read.csv("“/home/abbasi/Desktop/R/raw_data/HR-Employee-Attrition.csv”)</p>
+<p>dept_job_role_tbl &lt;- employee_attrition_tbl %&gt;% select(EmployeeNumber, Department, JobRole, PerformanceRating, Attrition)</p>
+<p>dept_job_role_tbl %&gt;%</p>
+<p>group_by(Attrition) %&gt;% summarize(n = n()) %&gt;% ungroup() %&gt;% mutate(pct = n / sum(n))</p>
+<p>dept_job_role_tbl %&gt;%</p>
+<p># Block 1 group_by(Department, Attrition) %&gt;% summarize(n = n()) %&gt;% ungroup() %&gt;%</p>
+<p># Block 2: Caution: It’s easy to inadvertently miss grouping when creating counts &amp; percents within groups group_by(Department) %&gt;% mutate(pct = n / sum(n))</p>
+<p>dept_job_role_tbl %&gt;%</p>
+<p># Block 1 group_by(Department, JobRole, Attrition) %&gt;% summarize(n = n()) %&gt;% ungroup() %&gt;%</p>
+<p># Block 2 group_by(Department, JobRole) %&gt;% mutate(pct = n / sum(n)) %&gt;% ungroup() %&gt;%</p>
+<p># Block 3 filter(Attrition %in% “Yes”)</p>
+<div id="section" class="section level3">
+<h3><span class="header-section-number">0.0.1</span> </h3>
+<p>dept_job_role_tbl %&gt;%</p>
+<p># Block 1 group_by(Department, JobRole, Attrition) %&gt;% summarize(n = n()) %&gt;% ungroup() %&gt;%</p>
+<p># Block 2 group_by(Department, JobRole) %&gt;% mutate(pct = n / sum(n)) %&gt;% ungroup() %&gt;%</p>
+<p># Block 3 filter(Attrition %in% “Yes”) %&gt;% arrange(desc(pct)) %&gt;% mutate( above_industry_avg = case_when( pct &gt; 0.088 ~ “Yes”, TRUE ~ “No” ) )</p>
+</div>
+<div id="function-to-calculate-attrition-cost" class="section level1">
+<h1><span class="header-section-number">1</span> Function to calculate attrition cost</h1>
+<p>calculate_attrition_cost &lt;- function(</p>
+<p># Employee n = 1, salary = 80000,</p>
+<p># Direct Costs separation_cost = 500, vacancy_cost = 10000, acquisition_cost = 4900, placement_cost = 3500,</p>
+<p># Productivity Costs net_revenue_per_employee = 250000, workdays_per_year = 240, workdays_position_open = 40, workdays_onboarding = 60, onboarding_efficiency = 0.50</p>
+<p>) {</p>
+<p># Direct Costs direct_cost &lt;- sum(separation_cost, vacancy_cost, acquisition_cost, placement_cost)</p>
+<p># Lost Productivity Costs productivity_cost &lt;- net_revenue_per_employee / workdays_per_year <em> (workdays_position_open + workdays_onboarding </em> onboarding_efficiency)</p>
+<p># Savings of Salary &amp; Benefits (Cost Reduction) salary_benefit_reduction &lt;- salary / workdays_per_year * workdays_position_open</p>
+<p># Estimated Turnover Per Employee cost_per_employee &lt;- direct_cost + productivity_cost - salary_benefit_reduction</p>
+<p># Total Cost of Employee Turnover total_cost &lt;- n * cost_per_employee</p>
+<p>return(total_cost)</p>
+<p>}</p>
+<p>calculate_attrition_cost() ## [1] 78483.33 calculate_attrition_cost(200) ## [1] 15696667</p>
+<p>dept_job_role_tbl %&gt;%</p>
+<p># Block 1 group_by(Department, JobRole, Attrition) %&gt;% summarize(n = n()) %&gt;% ungroup() %&gt;%</p>
+<p># Block 2 group_by(Department, JobRole) %&gt;% mutate(pct = n / sum(n)) %&gt;% ungroup() %&gt;%</p>
+<p># Block 3 filter(Attrition %in% “Yes”) %&gt;% arrange(desc(pct)) %&gt;% mutate( above_industry_avg = case_when( pct &gt; 0.088 ~ “Yes”, TRUE ~ “No” ) ) %&gt;%</p>
+<p># Block 4. Set salaray to 80000 for now mutate( cost_of_attrition = calculate_attrition_cost(n = n, salary = 80000) )</p>
+<p>dept_job_role_tbl %&gt;% count(Department, JobRole, Attrition)</p>
+<p>dept_job_role_tbl %&gt;%</p>
+<p>group_by(Department, JobRole, Attrition) %&gt;% summarize(n = n()) %&gt;% ungroup() %&gt;%</p>
+<p>group_by(Department, JobRole) %&gt;% mutate(pct = n / sum(n)) %&gt;% ungroup() %&gt;%</p>
+<p>filter(Attrition %in% “Yes”) %&gt;% arrange(desc(pct)) %&gt;% mutate( above_industry_avg = case_when( pct &gt; 0.088 ~ “Yes”, TRUE ~ “No” ) ) %&gt;%</p>
+<p>mutate( cost_of_attrition = calculate_attrition_cost(n = n, salary = 80000) )</p>
+<p>assess_attrition &lt;- function(data, attrition_col, attrition_value, baseline_pct) {</p>
+<p>attrition_col_expr &lt;- enquo(attrition_col)</p>
+<p>data %&gt;%</p>
+<pre><code># Use parenthesis () to give tidy eval evaluation priority
+filter((!! attrition_col_expr) %in% attrition_value) %&gt;%
+arrange(desc(pct)) %&gt;%
+mutate(
+  # Function inputs in numeric format (e.g. baseline_pct = 0.088 don&#39;t require tidy eval)
+  above_industry_avg = case_when(
+    pct &gt; baseline_pct ~ &quot;Yes&quot;,
+    TRUE ~ &quot;No&quot;
+  )
+)</code></pre>
+<p>}</p>
+<p>dept_job_role_tbl %&gt;%</p>
+<p>count(Department, JobRole, Attrition) %&gt;% count_to_pct(Department, JobRole) %&gt;% assess_attrition(Attrition, attrition_value = “Yes”, baseline_pct = 0.088) %&gt;% mutate( cost_of_attrition = calculate_attrition_cost(n = n, salary = 80000) ) %&gt;%</p>
+<p># Data Manipulation mutate(name = str_c(Department, JobRole, sep = “:”) %&gt;% as_factor()) %&gt;%</p>
+<p># Check levels # pull(name) %&gt;% # levels()</p>
+<p>mutate(name = fct_reorder(name, cost_of_attrition)) %&gt;% mutate(cost_text = str_c(“$”, format(cost_of_attrition / 1e6, digits = 2), “M”, sep = "")) %&gt;%</p>
+<p>#Plotting ggplot(aes(cost_of_attrition, y = name)) + geom_segment(aes(xend = 0, yend = name), color = “#2dc6d6”) + geom_point( aes(size = cost_of_attrition), color = “#2dc6d6”) + scale_x_continuous(labels = scales::dollar) + geom_label(aes(label = cost_text, size = cost_of_attrition), hjust = “inward”, color = “#2dc6d6”) + scale_size(range = c(3, 5)) + labs(title = “Estimated cost of Attrition: By Dept and Job Role”, y = "“, x =”Cost of attrition“) + theme(legend.position =”none")</p>
+<p>dept_job_role_tbl %&gt;%</p>
+<p>group_by(Department, JobRole, Attrition) %&gt;% summarize(n = n()) %&gt;% ungroup() %&gt;%</p>
+<p>group_by(Department, JobRole) %&gt;% mutate(pct = n / sum(n)) %&gt;% ungroup() %&gt;%</p>
+<p>filter(Attrition %in% “Yes”) %&gt;% arrange(desc(pct)) %&gt;% mutate( above_industry_avg = case_when( pct &gt; 0.088 ~ “Yes”, TRUE ~ “No” ) ) %&gt;%</p>
+<p>mutate( cost_of_attrition = calculate_attrition_cost(n = n, salary = 80000) )</p>
+</div>
+<div id="descriptive-features" class="section level1">
+<h1><span class="header-section-number">2</span> Descriptive Features</h1>
+<p>employee_attrition_tbl %&gt;% select(Age, DistanceFromHome, Gender, MaritalStatus, NumCompaniesWorked, Over18)</p>
+</div>
+<div id="employment-features" class="section level1">
+<h1><span class="header-section-number">3</span> Employment Features</h1>
+<p>employee_attrition_tbl %&gt;% select(Department, EmployeeCount, EmployeeNumber, JobInvolvement, JobLevel, JobRole, JobSatisfaction)</p>
+</div>
+<div id="compensation-features" class="section level1">
+<h1><span class="header-section-number">4</span> Compensation Features</h1>
+<p>employee_attrition_tbl %&gt;% select(DailyRate, HourlyRate, MonthlyIncome, MonthlyRate, PercentSalaryHike, StockOptionLevel)</p>
+</div>
+<div id="survery-results" class="section level1">
+<h1><span class="header-section-number">5</span> Survery Results</h1>
+<p>employee_attrition_tbl %&gt;% select(EnvironmentSatisfaction, JobSatisfaction, RelationshipSatisfaction, WorkLifeBalance)</p>
+</div>
+<div id="performance-data" class="section level1">
+<h1><span class="header-section-number">6</span> Performance Data</h1>
+<p>employee_attrition_tbl %&gt;% select(JobInvolvement, PerformanceRating)</p>
+</div>
+<div id="work-life-features" class="section level1">
+<h1><span class="header-section-number">7</span> Work-Life Features</h1>
+<p>employee_attrition_tbl %&gt;% select(BusinessTravel, OverTime)</p>
+</div>
+<div id="training-education" class="section level1">
+<h1><span class="header-section-number">8</span> Training &amp; Education</h1>
+<p>employee_attrition_tbl %&gt;% select(Education, EducationField, TrainingTimesLastYear)</p>
+</div>
+<div id="time-based-features" class="section level1">
+<h1><span class="header-section-number">9</span> Time-Based Features</h1>
+<p>employee_attrition_tbl %&gt;% select(TotalWorkingYears, YearsAtCompany, YearsInCurrentRole, YearsSinceLastPromotion, YearsWithCurrManager)</p>
+<p>library(GGally) # Step 2: Data Visualization —-</p>
+<p>employee_attrition_tbl %&gt;% select(Attrition, Gender, MaritalStatus, NumCompaniesWorked, Over18, DistanceFromHome) %&gt;% ggpairs()</p>
+</div>
+<div id="explore-features-by-category" class="section level1">
+<h1><span class="header-section-number">10</span> Explore Features by Category</h1>
+<p>plot_ggpairs &lt;- function(data, color = NULL, density_alpha = 0.5) {</p>
+<p>color_expr &lt;- enquo(color)</p>
+<p>if (rlang::quo_is_null(color_expr)) {</p>
+<pre><code>g &lt;- data %&gt;%
+  ggpairs(lower = &quot;blank&quot;) </code></pre>
+<p>} else {</p>
+<pre><code>color_name &lt;- quo_name(color_expr)
+
+g &lt;- data %&gt;%
+  ggpairs(mapping = aes_string(color = color_name), 
+          lower = &quot;blank&quot;, legend = 1,
+          diag = list(continuous = wrap(&quot;densityDiag&quot;, 
+                                        alpha = density_alpha))) +
+  theme(legend.position = &quot;bottom&quot;)</code></pre>
+<p>}</p>
+<p>return(g)</p>
+<p>}</p>
+</div>
+<div id="descriptive-features-age-gender-marital-status" class="section level1">
+<h1><span class="header-section-number">11</span> 1. Descriptive features: age, gender, marital status</h1>
+<p>employee_attrition_tbl %&gt;% select(Attrition, Gender, MaritalStatus, NumCompaniesWorked, Over18, DistanceFromHome) %&gt;% plot_ggpairs(Attrition)</p>
+</div>
+<div id="employment-features-department-job-role-job-level" class="section level1">
+<h1><span class="header-section-number">12</span> 2. Employment features: department, job role, job level</h1>
+<p>employee_attrition_tbl %&gt;% select(Attrition, contains(“employee”), contains(“department”), contains(“job”)) %&gt;% plot_ggpairs(Attrition)</p>
+<div id="compensation-features-hourlyrate-monthlyincome-stockoptionlevel" class="section level3">
+<h3><span class="header-section-number">12.0.1</span> 3. Compensation features: HourlyRate, MonthlyIncome, StockOptionLevel</h3>
+<p>employee_attrition_tbl %&gt;% select(Attrition, contains(“income”), contains(“rate”), contains(“salary”), contains(“stock”)) %&gt;% plot_ggpairs(Attrition)</p>
 </div>
 </div>
+<div id="survey-results-satisfaction-level-worklifebalance" class="section level1">
+<h1><span class="header-section-number">13</span> 4. Survey Results: Satisfaction level, WorkLifeBalance</h1>
+<p>employee_attrition_tbl %&gt;% select(Attrition, contains(“satisfaction”), contains(“life”)) %&gt;% plot_ggpairs(Attrition)</p>
 </div>
-<div id="my-second-post-note-the-order" class="section level1">
-<h1><span class="header-section-number">2</span> My second post (note the order)</h1>
-<p>Last compiled: 2021-01-04</p>
-<p>I’m writing this tutorial going from the top down. And, this is how it will be printed. So, notice the second post is second in the list. If you want your most recent post to be at the top, then make a new post starting at the top. If you want the oldest first, do, then keep adding to the bottom</p>
+<div id="performance-data-job-involvment-performance-rating" class="section level1">
+<h1><span class="header-section-number">14</span> 5. Performance Data: Job Involvment, Performance Rating</h1>
+<p>employee_attrition_tbl %&gt;% select(Attrition, contains(“performance”), contains(“involvement”)) %&gt;% plot_ggpairs(Attrition)</p>
 </div>
-<div id="adding-r-stuff" class="section level1">
-<h1><span class="header-section-number">3</span> Adding R stuff</h1>
-<p>So far this is just a blog where you can write in plain text and serve your writing to a webpage. One of the main purposes of this lab journal is to record your progress learning R. The reason I am asking you to use this process is because you can both make a website, and a lab journal, and learn R all in R-studio. This makes everything really convenient and in the same place.</p>
-<p>So, let’s say you are learning how to make a histogram in R. For example, maybe you want to sample 100 numbers from a normal distribution with mean = 0, and standard deviation = 1, and then you want to plot a histogram. You can do this right here by using an r code block, like this:</p>
-<pre class="r"><code>samples &lt;- rnorm(100, mean=0, sd=1)
-hist(samples)</code></pre>
-<p><img src="03_ml_aut_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
-<p>When you knit this R Markdown document, you will see that the histogram is printed to the page, along with the R code. This document can be set up to hide the R code in the webpage, just delete the comment (hashtag) from the cold folding option in the yaml header up top. For purposes of letting yourself see the code, and me see the code, best to keep it the way that it is. You’ll learn that all of these things and more can be customized in each R code block.</p>
+<div id="work-life-features-1" class="section level1">
+<h1><span class="header-section-number">15</span> 6. Work-Life Features</h1>
+<p>employee_attrition_tbl %&gt;% select(Attrition, contains(“overtime”), contains(“travel”)) %&gt;% plot_ggpairs(Attrition)</p>
+</div>
+<div id="training-and-education" class="section level1">
+<h1><span class="header-section-number">16</span> 7. Training and Education</h1>
+<p>employee_attrition_tbl %&gt;% select(Attrition, contains(“training”), contains(“education”)) %&gt;% plot_ggpairs(Attrition)</p>
+</div>
+<div id="time-based-features-years-at-company-years-in-current-role" class="section level1">
+<h1><span class="header-section-number">17</span> 8. Time-Based Features: Years at company, years in current role</h1>
+<p>employee_attrition_tbl %&gt;% select(Attrition, contains(“years”)) %&gt;% plot_ggpairs(Attrition)</p>
 </div>
 
 

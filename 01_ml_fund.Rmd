@@ -26,12 +26,12 @@ knitr::opts_chunk$set(
 # install.packages("plotly")
 
 library(tidyverse)
-library(ggplot2)
-library(dplyr)
-library(forcats)
-library(tibble)
-library(stringr)
-library(purrr)
+#library(ggplot2)
+#library(dplyr)
+#library(forcats)
+#library(tibble)
+#library(stringr)
+#library(purrr)
 library(readr)
 library(tidyr)
 library(tidyquant)
@@ -331,19 +331,19 @@ Next, we'll combine the clusters from the `k_means_obj` with the `umap_results_t
 ```{r}
 
 umap_kmeans_results_tbl_i <- k_means_obj %>% 
-    # Augment the `k_means_obj` with the `stock_date_matrix_tbl` to get the clusters added to the end of the tibble
+    # Augment the k_means_obj with the stock_date_matrix_tbl to get the clusters added to the end of the tibble
     augment(stock_date_matrix_tbl1) %>%
-    # Select just the `symbol` and `.cluster` columns
+    # Select just the symbol and .cluster columns
     select(symbol, .cluster)  
 
 ```
 
 ```{r}
 sp_500_index_tbl <- read_rds("/home/abbasi/Desktop/R/raw_data/sp_500_index_tbl.rds")
-  # Left join the result with the `umap_results_tbl` by the `symbol` 
+  # Left join the result with the umap_results_tbl by the symbol 
 umap_kmeans_results_tbl1  <- left_join(umap_kmeans_results_tbl_i, umap_results_tbl, by = "symbol")
 
-  #Left join the result with the result of `sp_500_index_tbl %>% select(symbol, company, sector)` by the `symbol` column. 
+  #Left join the result with the result of sp_500_index_tbl %>% select(symbol, company, sector) by the symbol column. 
 subsub_sp_500_prices_tbl <- sp_500_index_tbl %>% select(symbol, company, sector) 
 
 umap_kmeans_results_tbl2  <- left_join(umap_kmeans_results_tbl1,subsub_sp_500_prices_tbl, by = "symbol") 
