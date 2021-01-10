@@ -1,5 +1,5 @@
 ---
-title: "Challenge 2"
+title: "Supervised Machine Learning "
 author: "Samim Abbasi"
 date: "2021-01-04"
 output:
@@ -21,10 +21,6 @@ knitr::opts_chunk$set(
     )
 ```
 
-```{r}
-rm(list = ls())
-```
-
 
 ```{r}
 library(tidyverse)
@@ -38,15 +34,10 @@ library(rsample)
 library(yardstick)
 library(rpart.plot)
 library(tidyr)
-
-
 ```
-
 ```{r}
 # Modeling ----------------------------------------------------------------
 bike_orderlines_tbl <- readRDS("/home/abbasi/Desktop/R/raw_data/bike_orderlines.rds") 
-
-
 model_sales_tbl <- bike_orderlines_tbl %>%
     select(total_price, model, category_2, frame_material) %>%
     
@@ -55,7 +46,6 @@ model_sales_tbl <- bike_orderlines_tbl %>%
     ungroup() %>%
     
     arrange(desc(total_sales))
-
 model_sales_tbl %>%
     mutate(category_2 = as_factor(category_2) %>% 
                fct_reorder(total_sales, .fun = max) %>% 
@@ -64,7 +54,6 @@ model_sales_tbl %>%
     ggplot(aes(frame_material, total_sales)) +
     geom_violin() +
     geom_jitter(width = 0.1, alpha = 0.5, color = "#2c3e50") +
-
     facet_wrap(~ category_2) +
     scale_y_continuous(labels = scales::dollar_format(scale = 1e-6, suffix = "M", accuracy = 0.1)) +
     tidyquant::theme_tq() +
@@ -72,7 +61,6 @@ model_sales_tbl %>%
         title = "Total Sales for Each Model",
         x = "Frame Material", y = "Revenue"
     )
-
 ```
 
 # Data Preprocessing
@@ -86,8 +74,6 @@ model_sales_tbl %>%
 bike_features_tbl <- readRDS("/home/abbasi/Desktop/R/BDML/bike_features_tbl.rds")  %>% 
   unnest(`Brake Rotor`) 
  
-
-
   bike_features_tbl <- bike_features_tbl %>%
   # rename all columns 
   rename_all(function(.name) {
@@ -107,15 +93,12 @@ bike_features_tbl
 
 ```{r}
 bike_features_tbl <- bike_features_tbl %>%
-
 mutate(disc_brake = str_replace(disc_brake, "disc_brake_Shimano.MT200...UR300.", "disc_brake_Shimano.MT201")) %>%
   mutate(disc_brake = str_replace_all(disc_brake, "\u00A0", " ")) %>%
   mutate(wheel_1 = str_replace(wheel_1, "wheel_1_Alexrims.GX26P...Shimano.MT400", "wheel_1_Alexrims.GX26P1...Shimano.MT401"))
 bike_features_tbl <- bike_features_tbl[ !duplicated(names(bike_features_tbl)) ]
-
 #bike_features_tbl %>% 
  # mutate(~. = str_replace(~., ".*MT200.*UR300", "Shimano MT200 / UR300"))
-
 ```
 
 
@@ -128,20 +111,13 @@ bike_features_tbl <- bike_features_tbl %>%
   mutate(id = row_number()) %>% 
   mutate(frame_material = factor(frame_material)) %>%
   select(id, everything(), -url) 
-
 bike_features_tbl %>% distinct(category_2)
-
-split_obj <- rsample::initial_split(bike_features_tbl, prop   = 0.8, 
+split_obj <- rsample::initial_split(bike_features_tbl, prop   = 0.95, 
                                     strata = "category_2")
-
-
-
 split_obj %>% training() %>% distinct(category_2)
 split_obj %>% testing() %>% distinct(category_2)
-
 bf_train_data <- training(split_obj)
 bf_test_data  <- testing(split_obj)
-
 ```
 
 
@@ -152,13 +128,11 @@ bf_test_data  <- testing(split_obj)
 bf_rec <- 
   recipe(frame_material ~ ., data = bf_train_data) %>% 
   step_rm(disc_brake, wheel_1 ) %>%
-
   step_novel(all_predictors(), -all_numeric()) 
   
   dummies <- bf_rec %>% step_dummy(all_nominal(), -all_outcomes()) %>% step_zv(all_predictors()) 
    
  prep(dummies, training = bf_train_data, retain = TRUE)
-
 summary(dummies)
 ```
 
@@ -167,54 +141,38 @@ summary(dummies)
 lr_mod <- 
   logistic_reg() %>% 
   set_engine("glm")
-
 lr_mod
-
 bf_wokflow <- 
   workflow() %>% 
   add_model(lr_mod) %>% 
   add_recipe(dummies)
 bf_wokflow
-
-
-
 bf_fit <- 
   bf_wokflow %>% 
   fit(data = bf_train_data)
-
 bf_fit
-
 bf_fit %>% 
   pull_workflow_fit() %>% 
   tidy()
 ```
 # Prediction
 ```{r}
-
-
-
 bf_pred <- 
   predict(bf_fit, bf_test_data, type="prob") %>% 
   bind_cols(bf_test_data %>% select(frame_material, category_2)) 
-
 bf_pred %>% 
   roc_curve(truth = frame_material, .pred_aluminium) %>% 
   autoplot()
-
 bf_pred %>% 
   roc_curve(truth = frame_material, .pred_carbon) %>% 
   autoplot()
-
 bf_pred
-
 bf_roc <- bf_pred %>% 
           roc_auc(truth = frame_material, .pred_aluminium)
 bf_roc
-
 bf_roc <- bf_pred %>% 
   roc_auc(truth = frame_material, .pred_carbon)
 bf_roc
-
 ```
 
 
@@ -227,19 +185,13 @@ bf_roc
 model_01_linear_lm_simple <- linear_reg(mode = "regression") %>%
   set_engine("lm") %>%
   fit(price ~ category_2 + frame_material, data = bf_train_data)
-
 model_01_linear_lm_simple
-
 bf_test_data <- bf_test_data %>% filter(category_2 != "Fat Bikes")
-
 yards <- model_01_linear_lm_simple %>%
   predict(new_data = bf_test_data) %>%
   bind_cols(bf_test_data %>% select(price)) %>%
   yardstick::metrics(truth = price, estimate = .pred)
-
 yards
-
-
 g1 <- bike_features_tbl %>% 
   mutate(category_2 = as.factor(category_2) %>% 
            fct_reorder(price)) %>% 
@@ -254,12 +206,7 @@ g1 <- bike_features_tbl %>%
     title = "Unit Price for Each Model",
     y = "", x = "Category 2"
   )
-
-
 g1
-
-
-
 new_race_alu <- tibble(
   model = "Exceed AL SL new",
   category_2 = "Race",
@@ -289,11 +236,8 @@ new_race_alu <- tibble(
   shimano_nexus = 0,
   shimano_alfine = 0
 ) 
-
 new_race_alu
-
 predict(model_01_linear_lm_simple, new_data = new_race_alu)
-
 models_tbl <- tibble(
   model_id = str_c("Model 0", 1:1),
   model = list(
@@ -301,27 +245,22 @@ models_tbl <- tibble(
   )
 )
 models_tbl
-
 predictions_new_race_alu_tbl <- models_tbl %>%
   mutate(predictions = map(model, predict, new_data = new_race_alu)) %>%
   unnest(predictions) %>%
   mutate(category_2 = "Race") %>%
   left_join(new_race_alu, by = "category_2")
-
 predictions_new_race_alu_tbl
-
-
-
 g2 <- g1 +
   geom_point(aes(y = .pred), color = "red", alpha = 0.5,
              data = predictions_new_race_alu_tbl) +
   ggrepel::geom_text_repel(aes(label = model_id, y = .pred),
                            size = 3,
                            data = predictions_new_race_alu_tbl)
-
 g2
-
 ```
+
+
 
 
 

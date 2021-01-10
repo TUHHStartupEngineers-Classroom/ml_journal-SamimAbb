@@ -35,6 +35,16 @@ library(data.table)
 library(cowplot)
 library(glue)
 library(stringr)
+Sys.setenv(https_proxy="")
+Sys.setenv(http_proxy="")
+Sys.setenv(http_proxy_user="")
+Sys.setenv(https_proxy_user="")
+h2o.init()
+```
+
+
+
+```{r}
 
 product_backorders_tbl <- read.csv("/home/abbasi/Desktop/R/raw_data/product_backorders.csv")
 
@@ -58,7 +68,7 @@ test_tbl  <- bake(product_rec, new_data = test_data)
 
 
 # Modeling
-h2o.init()
+
 
 # Split data into a training and a validation data frame
 # Setting the seed is just for reproducability
@@ -126,11 +136,10 @@ data_transformed_tbl %>%
        subtitle = paste0("Ordered by: ", "auc"),
        y = "Model Postion, Model ID", x = "") + 
   theme(legend.position = "bottom")
+```
 
-
-
-
-deeplearning_h2o <- h2o.loadModel("/home/abbasi/Desktop/R/raw_data/h20_models/DRF_1_AutoML_20201224_182023")
+```{r}
+deeplearning_h2o <- h2o.loadModel("/home/abbasi/Desktop/R/h20_models/XGBoost_2_AutoML_20210110_151619")
 
 deeplearning_h2o
 
@@ -168,16 +177,17 @@ deeplearning_grid_01_model_1 %>% h2o.auc(train = T, valid = T, xval = T)
 deeplearning_grid_01_model_1 %>%
   h2o.performance(newdata = as.h2o(test_tbl))
 
-# deeplearning_grid_01_model_1 %>%h2o.saveModel(path = "/home/abbasi/Desktop/R/raw_data/h20_models/")
+deeplearning_grid_01_model_1 %>% h2o.saveModel(path = "/home/abbasi/Desktop/R/h20_models/")
+```
 
 
+```{r}
 
-stacked_ensemble_h2o <- h2o.loadModel("/home/abbasi/Desktop/R/raw_data/h20_models/GBM_grid__1_AutoML_20201224_184436_model_2")
-deeplearning_h2o     <- h2o.loadModel("/home/abbasi/Desktop/R/raw_data/h20_models/DRF_1_AutoML_20201224_182023")
-glm_h2o              <- h2o.loadModel("/home/abbasi/Desktop/R/raw_data/h20_models/deeplearning_grid_01_model_1")
+deeplearning_h2o     <- h2o.loadModel("/home/abbasi/Desktop/R/h20_models/XGBoost_2_AutoML_20210110_151619")
+glm_h2o              <- h2o.loadModel("/home/abbasi/Desktop/R/h20_models/deeplearning_grid_01_model_1")
 
 
-performance_h2o <- h2o.performance(stacked_ensemble_h2o, newdata = as.h2o(test_tbl))
+performance_h2o <- h2o.performance(deeplearning_h2o, newdata = as.h2o(test_tbl))
 
 typeof(performance_h2o)
 performance_h2o %>% slotNames()
@@ -188,12 +198,12 @@ performance_h2o@metrics
 
 h2o.auc(performance_h2o, train = T, valid = T, xval = T)
 
-h2o.auc(stacked_ensemble_h2o, train = T, valid = T, xval = T)
+
 
 h2o.giniCoef(performance_h2o)
 h2o.logloss(performance_h2o)
-h2o.confusionMatrix(stacked_ensemble_h2o)
-h2o.confusionMatrix(performance_h2o)
+#h2o.confusionMatrix(stacked_ensemble_h2o)
+#h2o.confusionMatrix(performance_h2o)
 
 performance_tbl <- performance_h2o %>%
   h2o.metric() %>%
@@ -230,12 +240,14 @@ performance_tbl %>%
   labs(title = "Precision vs Recall", y = "value") +
   theme_new
 
-
+```
 
 
 # ROC Plot
+```{r}
 
-path <- "/home/abbasi/Desktop/R/raw_data/h20_models/GBM_grid__1_AutoML_20201224_184436_model_2"
+
+path <- "/home/abbasi/Desktop/R/h20_models/GBM_grid__1_AutoML_20201224_184436_model_2"
 
 load_model_performance_metrics <- function(path, test_tbl) {
   
@@ -274,6 +286,9 @@ model_metrics_tbl %>%
     subtitle = "Performance of 3 Top Performing Models"
   )
 
+```
+
+```{r}
 
 
 
@@ -292,7 +307,7 @@ load_model_performance_metrics <- function(path, test_tbl) {
   
 }
 
-model_metrics_tbl <- fs::dir_info(path = "/home/abbasi/Desktop/R/raw_data/h20_models/") %>%
+model_metrics_tbl <- fs::dir_info(path = "/home/abbasi/Desktop/R/h20_models/") %>%
   select(path) %>%
   mutate(metrics = map(path, load_model_performance_metrics, test_tbl)) %>%
   unnest(cols = metrics)
@@ -313,7 +328,7 @@ model_metrics_tbl %>%
     subtitle = "Performance of 3 Top Performing Models"
   )
 
-stacked_ensemble_h2o <- h2o.loadModel("/home/abbasi/Desktop/R/raw_data/h20_models/GBM_1_AutoML_20201224_205832")
+stacked_ensemble_h2o <- h2o.loadModel("/home/abbasi/Desktop/R/h20_models/XGBoost_2_AutoML_20210110_151619")
 stacked_ensemble_h2o
 
 predictions <- h2o.predict(stacked_ensemble_h2o, newdata = as.h2o(test_tbl))
@@ -323,8 +338,8 @@ typeof(predictions)
 predictions_tbl <- predictions %>% as_tibble()
 predictions_tbl
 
-
 # Gain & Lift
+
 ranked_predictions_tbl <- predictions_tbl %>%
   bind_cols(test_tbl) %>%
   select(predict:Yes, went_on_backorder) %>%

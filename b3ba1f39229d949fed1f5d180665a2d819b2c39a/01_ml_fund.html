@@ -587,7 +587,7 @@ sp_500_daily_tbl &lt;- sp_500_prices_tbl %&gt;%
 <pre class="r"><code>broom::glance(kmeans_obj)</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["totss"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["tot.withinss"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["betweenss"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["iter"],"name":[4],"type":["int"],"align":["right"]}],"data":[{"1":"33.60445","2":"29.20555","3":"4.398903","4":"5"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["totss"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["tot.withinss"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["betweenss"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["iter"],"name":[4],"type":["int"],"align":["right"]}],"data":[{"1":"33.60445","2":"29.20555","3":"4.398903","4":"3"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 </div>
@@ -620,7 +620,7 @@ k_means_mapped_tbl &lt;- tibble(centers = 1:30) %&gt;%
     select(centers, tot.withinss)</code></pre>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["centers"],"name":[1],"type":["int"],"align":["right"]},{"label":["tot.withinss"],"name":[2],"type":["dbl"],"align":["right"]}],"data":[{"1":"1","2":"33.60445"},{"1":"2","2":"31.40409"},{"1":"3","2":"30.17267"},{"1":"4","2":"29.20555"},{"1":"5","2":"28.56583"},{"1":"6","2":"27.95312"},{"1":"7","2":"27.40209"},{"1":"8","2":"26.88369"},{"1":"9","2":"26.40826"},{"1":"10","2":"25.99584"},{"1":"11","2":"25.67204"},{"1":"12","2":"25.27162"},{"1":"13","2":"24.99714"},{"1":"14","2":"24.73947"},{"1":"15","2":"24.41722"},{"1":"16","2":"24.22176"},{"1":"17","2":"23.91444"},{"1":"18","2":"23.65638"},{"1":"19","2":"23.44183"},{"1":"20","2":"23.18356"},{"1":"21","2":"22.96302"},{"1":"22","2":"22.74063"},{"1":"23","2":"22.48946"},{"1":"24","2":"22.30535"},{"1":"25","2":"22.07458"},{"1":"26","2":"21.90343"},{"1":"27","2":"21.67918"},{"1":"28","2":"21.45226"},{"1":"29","2":"21.30040"},{"1":"30","2":"21.12025"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["centers"],"name":[1],"type":["int"],"align":["right"]},{"label":["tot.withinss"],"name":[2],"type":["dbl"],"align":["right"]}],"data":[{"1":"1","2":"33.60445"},{"1":"2","2":"31.40409"},{"1":"3","2":"30.17267"},{"1":"4","2":"29.20555"},{"1":"5","2":"28.56583"},{"1":"6","2":"27.96779"},{"1":"7","2":"27.40188"},{"1":"8","2":"26.88369"},{"1":"9","2":"26.40884"},{"1":"10","2":"26.02610"},{"1":"11","2":"25.64174"},{"1":"12","2":"25.27363"},{"1":"13","2":"25.00896"},{"1":"14","2":"24.71088"},{"1":"15","2":"24.42258"},{"1":"16","2":"24.17518"},{"1":"17","2":"23.96309"},{"1":"18","2":"23.66145"},{"1":"19","2":"23.43763"},{"1":"20","2":"23.22870"},{"1":"21","2":"22.92888"},{"1":"22","2":"22.71375"},{"1":"23","2":"22.49368"},{"1":"24","2":"22.27553"},{"1":"25","2":"22.12239"},{"1":"26","2":"21.86590"},{"1":"27","2":"21.67342"},{"1":"28","2":"21.47631"},{"1":"29","2":"21.28774"},{"1":"30","2":"21.10775"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 <pre class="r"><code># Visualize Scree Plot
@@ -691,15 +691,15 @@ k_means_obj &lt;- k_means_mapped_tbl %&gt;%
 <li>Store the output as <code>umap_kmeans_results_tbl</code></li>
 </ul>
 <pre class="r"><code>umap_kmeans_results_tbl_i &lt;- k_means_obj %&gt;% 
-    # Augment the `k_means_obj` with the `stock_date_matrix_tbl` to get the clusters added to the end of the tibble
+    # Augment the k_means_obj with the stock_date_matrix_tbl to get the clusters added to the end of the tibble
     augment(stock_date_matrix_tbl1) %&gt;%
-    # Select just the `symbol` and `.cluster` columns
+    # Select just the symbol and .cluster columns
     select(symbol, .cluster)  </code></pre>
 <pre class="r"><code>sp_500_index_tbl &lt;- read_rds(&quot;/home/abbasi/Desktop/R/raw_data/sp_500_index_tbl.rds&quot;)
-  # Left join the result with the `umap_results_tbl` by the `symbol` 
+  # Left join the result with the umap_results_tbl by the symbol 
 umap_kmeans_results_tbl1  &lt;- left_join(umap_kmeans_results_tbl_i, umap_results_tbl, by = &quot;symbol&quot;)
 
-  #Left join the result with the result of `sp_500_index_tbl %&gt;% select(symbol, company, sector)` by the `symbol` column. 
+  #Left join the result with the result of sp_500_index_tbl %&gt;% select(symbol, company, sector) by the symbol column. 
 subsub_sp_500_prices_tbl &lt;- sp_500_index_tbl %&gt;% select(symbol, company, sector) 
 
 umap_kmeans_results_tbl2  &lt;- left_join(umap_kmeans_results_tbl1,subsub_sp_500_prices_tbl, by = &quot;symbol&quot;) 

@@ -16,6 +16,12 @@ output:
 knitr::opts_chunk$set(message=FALSE,warning=FALSE, cache=TRUE)
 ```
 
+
+```{r}
+rm(list = ls())
+```
+
+
 # 1. Setup ----
 
 # Load Libraries 
@@ -43,6 +49,11 @@ library(data.table)
 library(cowplot)
 library(glue)
 library(ggplot2)
+Sys.setenv(https_proxy="") 
+Sys.setenv(http_proxy="") 
+Sys.setenv(http_proxy_user="") 
+Sys.setenv(https_proxy_user="")
+h2o.init()
 ```
 
 # Load Data
@@ -51,7 +62,7 @@ library(ggplot2)
 
 
 employee_attrition_tbl <- read_csv("/home/abbasi/Desktop/R/raw_data/datasets-1067-1925-WA_Fn-UseC_-HR-Employee-Attrition.csv")
-definitions_raw_tbl    <- read_excel("/home/abbasi/Desktop/R/raw_data/ml_journal-ttsagor/data_definitions.xlsx", sheet = 1, col_names = FALSE)
+definitions_raw_tbl    <- read_excel("/home/abbasi/Desktop/R/BDML/data_definitions.xlsx", sheet = 1, col_names = FALSE)
 ```
 # Processing Pipeline
 
@@ -128,7 +139,7 @@ test_tbl  <- bake(recipe_obj, new_data = test_readable_tbl)
 
 h2o.init()
 
-automl_leader <- h2o.loadModel("/home/abbasi/Desktop/R/raw_data/h20_models/StackedEnsemble_BestOfFamily_AutoML_20201226_190932")
+automl_leader <- h2o.loadModel("/home/abbasi/Desktop/R/h20_models/StackedEnsemble_BestOfFamily_AutoML_20210110_151619")
 automl_leader
 
 ```
@@ -141,9 +152,6 @@ automl_leader
 ## 3.1 Making Predictions ----
 
 ```{r}
-
-
-
 predictions_tbl <- automl_leader %>% 
   h2o.predict(newdata = as.h2o(test_tbl)) %>%
   as.tibble() %>%
@@ -153,12 +161,10 @@ predictions_tbl <- automl_leader %>%
   )
 
 predictions_tbl
+```
 
 
-
-
-
-
+```{r}
 explainer <- train_tbl %>%
   select(-Attrition) %>%
   lime(
@@ -170,7 +176,11 @@ explainer <- train_tbl %>%
 
 explainer
 
+```
 
+
+
+```{r}
 
 
 explanation <- test_tbl %>%
