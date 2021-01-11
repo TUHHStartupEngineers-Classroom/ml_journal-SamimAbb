@@ -61,3 +61,130 @@ b. People that leave tend to have less working years at the company
 10. Time-Based Features
 What can you deduce about the interaction between Years Since Last Promotion and Attrition?
 b. Those that are leaving have fewer years since last promotion than those that are staying
+
+
+# Automated Machine Learning with H20 (II)
+
+
+
+```{r}
+library(modeldata)
+library(readr)
+library(readxl)
+library(modelr)
+library(modeltools)
+library(tidymodels)
+library(magrittr)
+library(dplyr)
+library(sjmisc)
+library(magrittr)
+library(haven)
+library(sjlabelled)
+library(rsample)
+library(recipes)
+library(rstanarm)
+library(broom.mixed)
+library(h2o)
+library(bayesplot)
+h2o.init()
+```
+
+
+```{r}
+theme_set(bayesplot::theme_default())
+product_backorders_tbl <- read_csv("/home/abbasi/Desktop/R/raw_data/product_backorders.csv") 
+product_backorders_tbl %>% glimpse()
+data_split <- initial_split(product_backorders_tbl, prop = 3/4)
+# Assign training and test data
+train_data <- training(data_split)
+test_data  <- testing(data_split)
+factor_names <- c("went_on_backorder")
+product_rec <- 
+  recipe(went_on_backorder ~ ., data = train_data) %>%  
+  step_dummy(all_nominal(), -all_outcomes()) %>% 
+  step_zv(all_predictors()) %>% 
+  step_mutate_at(went_on_backorder, fn = as.factor) %>%
+  prep()
+d <- summary(product_rec)
+train_tbl <- bake(product_rec, new_data = train_data)
+test_tbl  <- bake(product_rec, new_data = test_data)
+#train_tbl <- train(product_rec, new_data = train_data)
+#test_tbl  <- train(product_rec, new_data = test_data)
+```
+
+# Modeling
+```{r}
+h2o.init()
+# Split data into a training and a validation data frame
+# Setting the seed is just for reproducability
+split_h2o <- h2o.splitFrame(as.h2o(train_tbl), ratios = c(0.75), seed = 1234)
+train_h2o <- split_h2o[[1]]
+valid_h2o <- split_h2o[[2]]
+test_h2o  <- as.h2o(test_tbl)
+# Set the target and predictors
+y <- "went_on_backorder"
+x <- setdiff(names(train_h2o), y)
+```
+
+```{r}
+automl_models_h2o <- h2o.automl(
+  x = x,
+  y = y,
+  training_frame    = train_h2o,
+  validation_frame  = valid_h2o,
+  leaderboard_frame = test_h2o,
+  max_runtime_secs  = 30,
+  nfolds            = 5 
+)
+```
+
+```{r}
+typeof(automl_models_h2o)
+slotNames(automl_models_h2o)
+automl_models_h2o@leaderboard 
+automl_models_h2o@leader 
+```
+
+```{r}
+h2o.init()
+ h2o.getModel("StackedEnsemble_AllModels_AutoML_20210111_194353") %>%
+h2o.saveModel(path = "/home/abbasi/Desktop/R/h20_models/")
+ h2o.getModel("XGBoost_grid__1_AutoML_20210111_194353_model_1") %>%
+h2o.saveModel(path = "/home/abbasi/Desktop/R/h20_models/")
+  h2o.getModel("StackedEnsemble_BestOfFamily_AutoML_20210111_194353") %>%
+h2o.saveModel(path = "/home/abbasi/Desktop/R/h20_models/")
+   h2o.getModel("XGBoost_grid__1_AutoML_20210111_194353_model_2") %>%
+h2o.saveModel(path = "/home/abbasi/Desktop/R/h20_models/")
+    h2o.getModel("XGBoost_3_AutoML_20210111_194353") %>%
+h2o.saveModel(path = "/home/abbasi/Desktop/R/h20_models/")
+
+```
+
+
+```{r}
+extract_h2o_model_name_by_position <- function(h2o_leaderboard, n = 1, verbose = T) {
+  
+  model_name <- h2o_leaderboard %>%
+    as_tibble() %>%
+    slice(n) %>%
+    pull(model_id)
+  
+  if (verbose) message(model_name)
+  
+  return(model_name)
+  
+}
+```
+
+
+
+
+```{r}
+h2o.init()
+stacked_ensemble_h2o <- h2o.loadModel("/home/abbasi/Desktop/R/h20_models/XGBoost_3_AutoML_20210111_194353")
+stacked_ensemble_h2o
+predictions <- h2o.predict(stacked_ensemble_h2o, newdata = as.h2o(test_tbl))
+typeof(predictions)
+predictions_tbl <- predictions %>% as_tibble()
+predictions_tbl
+```

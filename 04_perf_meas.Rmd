@@ -35,10 +35,10 @@ library(data.table)
 library(cowplot)
 library(glue)
 library(stringr)
-Sys.setenv(https_proxy="")
-Sys.setenv(http_proxy="")
-Sys.setenv(http_proxy_user="")
-Sys.setenv(https_proxy_user="")
+# Sys.setenv(https_proxy="") 
+# Sys.setenv(http_proxy="") 
+# Sys.setenv(http_proxy_user="") 
+# Sys.setenv(https_proxy_user="")
 h2o.init()
 ```
 
@@ -68,7 +68,7 @@ test_tbl  <- bake(product_rec, new_data = test_data)
 
 
 # Modeling
-
+h2o.init()
 
 # Split data into a training and a validation data frame
 # Setting the seed is just for reproducability
@@ -139,7 +139,11 @@ data_transformed_tbl %>%
 ```
 
 ```{r}
-deeplearning_h2o <- h2o.loadModel("/home/abbasi/Desktop/R/h20_models/XGBoost_2_AutoML_20210110_151619")
+
+
+
+
+deeplearning_h2o <- h2o.loadModel("/home/abbasi/Desktop/R/h20_models/StackedEnsemble_BestOfFamily_AutoML_20210111_194353")
 
 deeplearning_h2o
 
@@ -177,13 +181,12 @@ deeplearning_grid_01_model_1 %>% h2o.auc(train = T, valid = T, xval = T)
 deeplearning_grid_01_model_1 %>%
   h2o.performance(newdata = as.h2o(test_tbl))
 
-deeplearning_grid_01_model_1 %>% h2o.saveModel(path = "/home/abbasi/Desktop/R/h20_models/")
-```
+ deeplearning_grid_01_model_1 %>%h2o.saveModel(path = "/home/abbasi/Desktop/R/h20_models/")
 
 
-```{r}
 
-deeplearning_h2o     <- h2o.loadModel("/home/abbasi/Desktop/R/h20_models/XGBoost_2_AutoML_20210110_151619")
+stacked_ensemble_h2o <- h2o.loadModel("/home/abbasi/Desktop/R/h20_models/XGBoost_grid__1_AutoML_20210111_194353_model_1")
+deeplearning_h2o     <- h2o.loadModel("/home/abbasi/Desktop/R/h20_models/XGBoost_3_AutoML_20210111_194353")
 glm_h2o              <- h2o.loadModel("/home/abbasi/Desktop/R/h20_models/deeplearning_grid_01_model_1")
 
 
@@ -202,8 +205,8 @@ h2o.auc(performance_h2o, train = T, valid = T, xval = T)
 
 h2o.giniCoef(performance_h2o)
 h2o.logloss(performance_h2o)
-#h2o.confusionMatrix(stacked_ensemble_h2o)
-#h2o.confusionMatrix(performance_h2o)
+
+h2o.confusionMatrix(performance_h2o)
 
 performance_tbl <- performance_h2o %>%
   h2o.metric() %>%
@@ -247,7 +250,7 @@ performance_tbl %>%
 ```{r}
 
 
-path <- "/home/abbasi/Desktop/R/h20_models/GBM_grid__1_AutoML_20201224_184436_model_2"
+path <- "/home/abbasi/Desktop/R/h20_models/XGBoost_3_AutoML_20210111_194353"
 
 load_model_performance_metrics <- function(path, test_tbl) {
   
@@ -262,7 +265,7 @@ load_model_performance_metrics <- function(path, test_tbl) {
   
 }
 
-model_metrics_tbl <- fs::dir_info(path = "/home/abbasi/Desktop/R/raw_data/h20_models/") %>%
+model_metrics_tbl <- fs::dir_info(path = "/home/abbasi/Desktop/R/h20_models/") %>%
   select(path) %>%
   mutate(metrics = map(path, load_model_performance_metrics, test_tbl)) %>%
   unnest(cols = metrics)
@@ -328,7 +331,7 @@ model_metrics_tbl %>%
     subtitle = "Performance of 3 Top Performing Models"
   )
 
-stacked_ensemble_h2o <- h2o.loadModel("/home/abbasi/Desktop/R/h20_models/XGBoost_2_AutoML_20210110_151619")
+stacked_ensemble_h2o <- h2o.loadModel("/home/abbasi/Desktop/R/h20_models/XGBoost_grid__1_AutoML_20210111_194353_model_1")
 stacked_ensemble_h2o
 
 predictions <- h2o.predict(stacked_ensemble_h2o, newdata = as.h2o(test_tbl))

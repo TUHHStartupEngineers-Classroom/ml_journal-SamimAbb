@@ -49,11 +49,11 @@ library(data.table)
 library(cowplot)
 library(glue)
 library(ggplot2)
-Sys.setenv(https_proxy="") 
-Sys.setenv(http_proxy="") 
-Sys.setenv(http_proxy_user="") 
-Sys.setenv(https_proxy_user="")
-h2o.init()
+# Sys.setenv(https_proxy="") 
+# Sys.setenv(http_proxy="") 
+# Sys.setenv(http_proxy_user="") 
+# Sys.setenv(https_proxy_user="")
+
 ```
 
 # Load Data
@@ -63,6 +63,7 @@ h2o.init()
 
 employee_attrition_tbl <- read_csv("/home/abbasi/Desktop/R/raw_data/datasets-1067-1925-WA_Fn-UseC_-HR-Employee-Attrition.csv")
 definitions_raw_tbl    <- read_excel("/home/abbasi/Desktop/R/BDML/data_definitions.xlsx", sheet = 1, col_names = FALSE)
+#source("00_Scripts/data_processing_pipeline.R")
 ```
 # Processing Pipeline
 
@@ -136,10 +137,8 @@ test_tbl  <- bake(recipe_obj, new_data = test_readable_tbl)
 
 
 # 2. Models ----
-
 h2o.init()
-
-automl_leader <- h2o.loadModel("/home/abbasi/Desktop/R/h20_models/StackedEnsemble_BestOfFamily_AutoML_20210110_151619")
+automl_leader <- h2o.loadModel("/home/abbasi/Desktop/R/h20_models/XGBoost_2_AutoML_20210110_151619")
 automl_leader
 
 ```
@@ -152,9 +151,11 @@ automl_leader
 ## 3.1 Making Predictions ----
 
 ```{r}
+h2o.init()
+setdiff( automl_leader@allparameters$x, colnames(test_tbl) )
 predictions_tbl <- automl_leader %>% 
   h2o.predict(newdata = as.h2o(test_tbl)) %>%
-  as.tibble() %>%
+  as_tibble() %>%
   bind_cols(
     test_tbl %>%
       select(Attrition, EmployeeNumber)
@@ -206,7 +207,7 @@ explanation
 
 
 explanation %>%
-  as.tibble() %>%
+  as_tibble() %>%
   select(feature:prediction) 
 
 
